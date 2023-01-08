@@ -1,0 +1,12 @@
+# This is a whitelist
+*
+
+# But descend into directories
+!*/
+
+# Include self
+!.gitignore
+
+!Makefile
+!src/**
+!include/**
