@@ -12,9 +12,9 @@
 #include <stdbool.h>
 
 typedef struct {
-	SDL_Window *window;
-	SDL_Renderer *renderer;
-	SDL_Texture *texture;
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    SDL_Texture *texture;
 } Display;
 
 bool init_display(Display *display, int scale);
