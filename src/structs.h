@@ -21,8 +21,10 @@ typedef struct {
     uint16_t iregister;
     uint8_t memory[4096];
     uint8_t registers[NUM_OF_REGISTERS];
+    uint8_t stack_pointer;
     uint16_t stack[16];
     uint32_t screen[SCREEN_SIZE];
+    bool keys_pressed[16];
 
     // Debugger, is null if debugging disabled
     Debugger *debugger;

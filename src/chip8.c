@@ -11,12 +11,14 @@ void init_chip8(Chip8 *chip, Debugger *debug) {
     chip->sound_timer = 0;
     chip->pc = 0;
     chip->iregister = 0;
+    chip->stack_pointer = 0;
     chip->debugger = debug;
 
     memset(chip->memory, 0, sizeof(chip->memory));
     memset(chip->registers, 0, sizeof(chip->registers));
     memset(chip->screen, 0, sizeof(chip->screen));
     memset(chip->stack, 0, sizeof(chip->stack));
+    memset(chip->keys_pressed, 0, sizeof(chip->keys_pressed));
 
     // Load font into memory
     uint8_t fontset[FONTSET_SIZE] = { 
@@ -220,50 +222,46 @@ void cycle(Chip8 *chip) {
             }            
             break;
         case 0xF:
-            if (instruction.x != 0) {
-                printf("UNDEFINED INSTRUCTION %X%X%X%X\n", instruction.instruction, instruction.x, instruction.y, instruction.n);
-            } else {
-                switch (instruction.nn) {
-                    case 0x07:
-                        // FX07 Read Delay Timer
-                        exec_FX07(chip, instruction.x);
-                        break;
-                    case 0x15:
-                        // FX15 Set Delay Timer
-                        exec_FX15(chip, instruction.x);
-                        break;
-                    case 0x18:
-                        // FX18 Set Sound Timer
-                        exec_FX18(chip, instruction.x);
-                        break;
-                    case 0x1E:
-                        // FX1E Add to Index
-                        exec_FX1E(chip, instruction.x);
-                        break;
-                    case 0x0A:
-                        // FX0A Get Key
-                        exec_FX0A(chip, instruction.x);
-                        break;
-                    case 0x29:
-                        // FX29 Font Character
-                        exec_FX29(chip, instruction.x);
-                        break;
-                    case 0x33:
-                        // FX33 Binary-coded decimal conversion
-                        exec_FX33(chip, instruction.x);
-                        break;
-                    case 0x55:
-                        // FX55 Store Memory
-                        exec_FX55(chip, instruction.x);
-                        break;
-                    case 0x65:
-                        // FX65 Load Memory
-                        exec_FX65(chip, instruction.x);
-                        break;
-                    default:
-                        printf("UNDEFINED INSTRUCTION %X%X%X%X\n", instruction.instruction, instruction.x, instruction.y, instruction.n);
-                        break;
-                }
+            switch (instruction.nn) {
+                case 0x07:
+                    // FX07 Read Delay Timer
+                    exec_FX07(chip, instruction.x);
+                    break;
+                case 0x15:
+                    // FX15 Set Delay Timer
+                    exec_FX15(chip, instruction.x);
+                    break;
+                case 0x18:
+                    // FX18 Set Sound Timer
+                    exec_FX18(chip, instruction.x);
+                    break;
+                case 0x1E:
+                    // FX1E Add to Index
+                    exec_FX1E(chip, instruction.x);
+                    break;
+                case 0x0A:
+                    // FX0A Get Key
+                    exec_FX0A(chip, instruction.x);
+                    break;
+                case 0x29:
+                    // FX29 Font Character
+                    exec_FX29(chip, instruction.x);
+                    break;
+                case 0x33:
+                    // FX33 Binary-coded decimal conversion
+                    exec_FX33(chip, instruction.x);
+                    break;
+                case 0x55:
+                    // FX55 Store Memory
+                    exec_FX55(chip, instruction.x);
+                    break;
+                case 0x65:
+                    // FX65 Load Memory
+                    exec_FX65(chip, instruction.x);
+                    break;
+                default:
+                    printf("UNDEFINED INSTRUCTION %X%X%X%X\n", instruction.instruction, instruction.x, instruction.y, instruction.n);
+                    break;
             }
             break;
         default:
@@ -294,7 +292,11 @@ void exec_00E0(Chip8 *chip) {
   
 void exec_00EE(Chip8 *chip) {
     debug(chip->debugger, halt_if_breakpoint(chip, "00EE"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+
+    // TODO Check for stack underflow
+    chip->stack_pointer--;
+    chip->pc = chip->stack[chip->stack_pointer];
+    chip->stack[chip->stack_pointer] = 0;   
 }
    
 void exec_1NNN(Chip8 *chip, uint16_t nnn) {
@@ -304,58 +306,68 @@ void exec_1NNN(Chip8 *chip, uint16_t nnn) {
    
 void exec_2NNN(Chip8 *chip, uint16_t nnn) {
     debug(chip->debugger, halt_if_breakpoint(chip, "2NNN"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+
+    // TODO Check for stack overflow
+    chip->stack[chip->stack_pointer] = chip->pc;
+    chip->stack_pointer++;
+    
+    chip->pc = nnn;
 }
    
 void exec_3XNN(Chip8 *chip, uint8_t x, uint8_t nn) {
     debug(chip->debugger, halt_if_breakpoint(chip, "3XNN"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    
+    if (chip->registers[x] == nn) {
+        chip->pc += 2;   
+    }
 }
    
 void exec_4XNN(Chip8 *chip, uint8_t x, uint8_t nn) {
     debug(chip->debugger, halt_if_breakpoint(chip, "4XNN"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+
+    if (chip->registers[x] != nn) {
+        chip->pc += 2;   
+    }
 }
    
 void exec_5XY0(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "5XY0"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+
+    if (chip->registers[x] == chip->registers[y]) {
+        chip->pc += 2;   
+    }
 }
    
 void exec_6XNN(Chip8 *chip, uint8_t x, uint8_t nn) {
     debug(chip->debugger, halt_if_breakpoint(chip, "6XNN"));
     
     chip->registers[x] = nn;
-    
-    debug(chip->debugger, printf("V%X: %X (%d)\n", x, chip->registers[x], chip->registers[x]));
 }
    
 void exec_7XNN(Chip8 *chip, uint8_t x, uint8_t nn) {
     debug(chip->debugger, halt_if_breakpoint(chip, "7XNN"));
     
     chip->registers[x] += nn;
-
-    debug(chip->debugger, printf("V%X: %X (%d)\n", x, chip->registers[x], chip->registers[x]));
 }   
    
 void exec_8XY0(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XY0"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    chip->registers[x] = chip->registers[y];
 }
 
 void exec_8XY1(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XY1"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    chip->registers[x] = chip->registers[x] | chip->registers[y];
 }
 
 void exec_8XY2(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XY2"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    chip->registers[x] = chip->registers[x] & chip->registers[y];
 }
 
 void exec_8XY3(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XY3"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    chip->registers[x] = chip->registers[x] ^ chip->registers[y];
 }
 
 void exec_8XY4(Chip8 *chip, uint8_t x, uint8_t y) {
@@ -385,7 +397,10 @@ void exec_8XYE(Chip8 *chip, uint8_t x, uint8_t y) {
 
 void exec_9XY0(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "9XY0"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    
+    if (chip->registers[x] != chip->registers[y]) {
+        chip->pc += 2;   
+    }
 }
    
 void exec_ANNN(Chip8 *chip, uint16_t nnn) {
@@ -445,37 +460,67 @@ void exec_DXYN(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n) {
    
 void exec_EX9E(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "EX9E"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+
+    // TODO Bounds checking?    
+    if (chip->keys_pressed[chip->registers[x]]) {
+        chip->pc += 2;   
+    }
 }
 
 void exec_EXA1(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "EXA1"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    
+    // TODO Bounds checking?    
+    if (!chip->keys_pressed[chip->registers[x]]) {
+        chip->pc += 2;   
+    }
 }
 
 void exec_FX07(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "FX07"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    chip->registers[x] = chip->delay_timer;
 }
 
 void exec_FX15(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "FX15"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    chip->delay_timer = chip->registers[x];
 }
 
 void exec_FX18(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "FX18"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    chip->sound_timer = chip->registers[x];
 }
 
 void exec_FX1E(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "FX1E"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+
+    uint16_t original_i = chip->iregister;
+    chip->iregister += chip->registers[x];
+
+    // Record an overflow in VF if the I register overflows above 1000
+    if (chip->iregister > 1000 && chip->iregister < original_i) {
+        chip->registers[0xF] = 1;
+    }
 }
 
+// TODO the original COSMAC VIP only continued execution on key release
 void exec_FX0A(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "FX0A"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+
+    int pressed = -1;
+    for (int i = 0; i < 16; i++) {
+        if (chip->keys_pressed[i]) {
+            pressed = i;
+            break;
+        }
+    }
+
+    if (pressed > -1) {
+        chip->registers[x] = pressed;
+    } else {
+        // Decrement the PC to halt execution
+        chip->pc -= 2;
+    }
 }
 
 void exec_FX29(Chip8 *chip, uint8_t x) {
@@ -490,10 +535,17 @@ void exec_FX33(Chip8 *chip, uint8_t x) {
 
 void exec_FX55(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "FX55"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+
+    // <= as this opperation is inclusive
+    for (int j = 0; j <= x; j++) {
+        chip->memory[chip->iregister+j] = chip->registers[j];   
+    }
 }
 
 void exec_FX65(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "FX65"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    // <= as this opperation is inclusive
+    for (int j = 0; j <= x; j++) {
+        chip->registers[j] = chip->memory[chip->iregister+j];   
+    }
 }

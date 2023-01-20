@@ -1,6 +1,8 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_keycode.h>
 #include <stdbool.h>
 #include "io.h"
+#include "structs.h"
 
 bool init_display(Display *display, int scale) {
     // Init SDL
@@ -46,7 +48,7 @@ void update_display(Display *display, void const* buffer, int pitch) {
     SDL_RenderPresent(display->renderer);
 }
 
-bool process_keyboard_input() {
+bool process_keyboard_input(Chip8 *chip) {
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
@@ -62,9 +64,176 @@ bool process_keyboard_input() {
                     case SDLK_ESCAPE:
                     {
                         return true;      
+                    }
+                    case SDLK_1:
+                    {
+                        chip->keys_pressed[0x1] = true;
+                        break;
+                    } 
+                    case SDLK_2:
+                    {
+                        chip->keys_pressed[0x2] = true;
+                        break;
+                    } 
+                    case SDLK_3:
+                    {
+                        chip->keys_pressed[0x3] = true;
+                        break;
+                    } 
+                    case SDLK_4:
+                    {
+                        chip->keys_pressed[0xC] = true;
+                        break;
+                    } 
+                    case SDLK_q:
+                    {
+                        chip->keys_pressed[0x4] = true;
+                        break;
+                    } 
+                    case SDLK_w:
+                    {
+                        chip->keys_pressed[0x5] = true;
+                        break;
+                    } 
+                    case SDLK_e:
+                    {
+                        chip->keys_pressed[0x6] = true;
+                        break;
+                    } 
+                    case SDLK_r:
+                    {
+                        chip->keys_pressed[0xD] = true;
+                        break;
+                    } 
+                    case SDLK_a:
+                    {
+                        chip->keys_pressed[0x7] = true;
+                        break;
+                    } 
+                    case SDLK_s:
+                    {
+                        chip->keys_pressed[0x8] = true;
+                        break;
+                    } 
+                    case SDLK_d:
+                    {
+                        chip->keys_pressed[0x9] = true;
+                        break;
+                    } 
+                    case SDLK_f:
+                    {
+                        chip->keys_pressed[0xE] = true;
+                        break;
+                    } 
+                    case SDLK_z:
+                    {
+                        chip->keys_pressed[0xA] = true;
+                        break;
+                    } 
+                    case SDLK_x:
+                    {
+                        chip->keys_pressed[0x0] = true;
+                        break;
+                    } 
+                    case SDLK_c:
+                    {
+                        chip->keys_pressed[0xB] = true;
+                        break;
+                    } 
+                    case SDLK_v:
+                    {
+                        chip->keys_pressed[0xF] = true;
+                        break;
                     } break;
                 }    
-            }     
+            } break;
+                 
+            case SDL_KEYUP:
+            {
+                switch(event.key.keysym.sym)
+                {
+                    case SDLK_1:
+                    {
+                        chip->keys_pressed[0x1] = false;
+                        break;
+                    } 
+                    case SDLK_2:
+                    {
+                        chip->keys_pressed[0x2] = false;
+                        break;
+                    } 
+                    case SDLK_3:
+                    {
+                        chip->keys_pressed[0x3] = false;
+                        break;
+                    } 
+                    case SDLK_4:
+                    {
+                        chip->keys_pressed[0xC] = false;
+                        break;
+                    } 
+                    case SDLK_q:
+                    {
+                        chip->keys_pressed[0x4] = false;
+                        break;
+                    } 
+                    case SDLK_w:
+                    {
+                        chip->keys_pressed[0x5] = false;
+                        break;
+                    } 
+                    case SDLK_e:
+                    {
+                        chip->keys_pressed[0x6] = false;
+                        break;
+                    } 
+                    case SDLK_r:
+                    {
+                        chip->keys_pressed[0xD] = false;
+                        break;
+                    } 
+                    case SDLK_a:
+                    {
+                        chip->keys_pressed[0x7] = false;
+                        break;
+                    } 
+                    case SDLK_s:
+                    {
+                        chip->keys_pressed[0x8] = false;
+                        break;
+                    } 
+                    case SDLK_d:
+                    {
+                        chip->keys_pressed[0x9] = false;
+                        break;
+                    } 
+                    case SDLK_f:
+                    {
+                        chip->keys_pressed[0xE] = false;
+                        break;
+                    } 
+                    case SDLK_z:
+                    {
+                        chip->keys_pressed[0xA] = false;
+                        break;
+                    } 
+                    case SDLK_x:
+                    {
+                        chip->keys_pressed[0x0] = false;
+                        break;
+                    } 
+                    case SDLK_c:
+                    {
+                        chip->keys_pressed[0xB] = false;
+                        break;
+                    } 
+                    case SDLK_v:
+                    {
+                        chip->keys_pressed[0xF] = false;
+                        break;
+                    } break;
+                }    
+            } break;    
         } 
     }
 

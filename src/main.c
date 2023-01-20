@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 
     clock_gettime(CLOCK_MONOTONIC_RAW, &last_cycle);
     while (!quit) {
-        quit = process_keyboard_input();
+        quit = process_keyboard_input(&chip);
         clock_gettime(CLOCK_MONOTONIC_RAW, &now);
         diff = (now.tv_sec - last_cycle.tv_sec) * 1000000 +
                (now.tv_nsec - last_cycle.tv_sec) / 1000;
