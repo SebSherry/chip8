@@ -6,30 +6,9 @@
 #define ROM_START_MEMORY_ADDR 0x200 
 
 #include <stdint.h>
-#include "io.h"
+#include "structs.h"
 
-typedef struct {
-    int debug;
-    uint8_t delay_timer;
-    uint8_t sound_timer;
-    uint16_t pc;
-    uint16_t iregister;
-    uint8_t memory[4096];
-    uint8_t registers[16];
-    uint16_t stack[16];
-    uint32_t screen[SCREEN_SIZE]; 
-} Chip8;
-
-typedef struct {
-    uint8_t instruction;
-    uint8_t x;
-    uint8_t y;
-    uint8_t n;
-    uint8_t nn;
-    uint16_t nnn;
-} Instruction;  
-
-void init_chip8(Chip8 *chip, int debug);
+void init_chip8(Chip8 *chip, Debugger *debug);
 int load_rom(Chip8 *chip, char *rom_filename);
 void cycle(Chip8 *chip);
 // Fetch and Decode the next instruction

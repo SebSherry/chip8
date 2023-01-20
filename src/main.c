@@ -1,6 +1,7 @@
 #include "chip8.h"
 #include "debug.h"
 #include "io.h"
+#include "structs.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -39,6 +40,7 @@ int main(int argc, char *argv[]) {
     uint64_t delay = target_cycle_rate / 1000000;
     Display display;
     Chip8 chip;
+    Debugger debugger = {0};
     bool quit = false;
     struct timespec now, last_cycle;
     uint64_t diff = 0;
@@ -54,7 +56,13 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    init_chip8(&chip, args.debug);
+    if (args.debug) {
+        init_debugger(&debugger);
+        init_chip8(&chip, &debugger);
+    } else {
+        init_chip8(&chip, NULL);
+    }
+
     if (load_rom(&chip, args.rom)) {
         // Exit because we found an error
         printf("Exiting\n");
@@ -85,8 +93,11 @@ int main(int argc, char *argv[]) {
 
             update_display(&display, &chip.screen, pitch);
 
-            if (chip.debug) {
-                quit = debug_prompt_user();
+            if (chip.debugger != NULL) {
+                quit = chip.debugger->exit;
+                if (!quit && chip.debugger->stepping) {
+                    quit = debug_prompt_user(chip.debugger, &chip);
+                }
             }
         }
     }

@@ -1,11 +1,12 @@
 #ifndef DEBUG_H_
 #define DEBUG_H_
 
-#define debug_printf(d, ...) ((d) == 0 ? 0 : printf(__VA_ARGS__))
+#define debug(d, f) ((d) == NULL ? 0 : f)
 
-#include "chip8.h"
+#include "structs.h"
 
-int debug_prompt_user();
-void debug_instruction(int debug, Instruction *instruction);
-
+void init_debugger(Debugger *debugger);
+int debug_prompt_user(Debugger *debugger, Chip8 *chip);
+void debug_instruction(Instruction *instruction);
+void halt_if_breakpoint(Chip8 *chip, char *instruction);
 #endif

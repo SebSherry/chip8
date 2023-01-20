@@ -1,16 +1,17 @@
 #include "chip8.h"
 #include "io.h"
 #include "debug.h"
+#include "structs.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
-void init_chip8(Chip8 *chip, int debug) {
+void init_chip8(Chip8 *chip, Debugger *debug) {
     chip->delay_timer = 0;
     chip->sound_timer = 0;
     chip->pc = 0;
     chip->iregister = 0;
-    chip->debug = debug;
+    chip->debugger = debug;
 
     memset(chip->memory, 0, sizeof(chip->memory));
     memset(chip->registers, 0, sizeof(chip->registers));
@@ -89,7 +90,7 @@ void cycle(Chip8 *chip) {
     // Fetch and Decode the next instruction
     decode(chip, &instruction);
     
-    debug_instruction(chip->debug, &instruction);
+    debug(chip->debugger, debug_instruction(&instruction));
 
     switch (instruction.instruction) {
         case 0x0:
@@ -287,129 +288,129 @@ void decode(Chip8 *chip, Instruction *instruction) {
    
 // Instruction Implementations 
 void exec_00E0(Chip8 *chip) {
-    debug_printf(chip->debug, "Executing 00E0\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "00E0"));
     memset(chip->screen, 0, sizeof(chip->screen)); 
 }
   
 void exec_00EE(Chip8 *chip) {
-    debug_printf(chip->debug, "Executing 00EE\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "00EE"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
    
 void exec_1NNN(Chip8 *chip, uint16_t nnn) {
-    debug_printf(chip->debug, "Executing 1NNN\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "1NNN"));
     chip->pc = nnn;
 }
    
 void exec_2NNN(Chip8 *chip, uint16_t nnn) {
-    debug_printf(chip->debug, "Executing 2NNN\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "2NNN"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
    
 void exec_3XNN(Chip8 *chip, uint8_t x, uint8_t nn) {
-    debug_printf(chip->debug, "Executing 3XNN\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "3XNN"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
    
 void exec_4XNN(Chip8 *chip, uint8_t x, uint8_t nn) {
-    debug_printf(chip->debug, "Executing 4XNN\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "4XNN"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
    
 void exec_5XY0(Chip8 *chip, uint8_t x, uint8_t y) {
-    debug_printf(chip->debug, "Executing 5XY0\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "5XY0"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
    
 void exec_6XNN(Chip8 *chip, uint8_t x, uint8_t nn) {
-    debug_printf(chip->debug, "Executing 6XNN\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "6XNN"));
     
     chip->registers[x] = nn;
     
-    debug_printf(chip->debug, "V%X: %X (%d)\n", x, chip->registers[x], chip->registers[x]);
+    debug(chip->debugger, printf("V%X: %X (%d)\n", x, chip->registers[x], chip->registers[x]));
 }
    
 void exec_7XNN(Chip8 *chip, uint8_t x, uint8_t nn) {
-    debug_printf(chip->debug, "Executing 7XNN\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "7XNN"));
     
     chip->registers[x] += nn;
 
-    debug_printf(chip->debug, "V%X: %X (%d)\n", x, chip->registers[x], chip->registers[x]);
+    debug(chip->debugger, printf("V%X: %X (%d)\n", x, chip->registers[x], chip->registers[x]));
 }   
    
 void exec_8XY0(Chip8 *chip, uint8_t x, uint8_t y) {
-    debug_printf(chip->debug, "Executing 8XY0\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "8XY0"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_8XY1(Chip8 *chip, uint8_t x, uint8_t y) {
-    debug_printf(chip->debug, "Executing 8XY1\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "8XY1"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_8XY2(Chip8 *chip, uint8_t x, uint8_t y) {
-    debug_printf(chip->debug, "Executing 8XY2\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "8XY2"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_8XY3(Chip8 *chip, uint8_t x, uint8_t y) {
-    debug_printf(chip->debug, "Executing 8XY3\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "8XY3"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_8XY4(Chip8 *chip, uint8_t x, uint8_t y) {
-    debug_printf(chip->debug, "Executing 8XY4\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "8XY4"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_8XY5(Chip8 *chip, uint8_t x, uint8_t y) {
-    debug_printf(chip->debug, "Executing 8XY5\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "8XY5"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_8XY6(Chip8 *chip, uint8_t x, uint8_t y) {
-    debug_printf(chip->debug, "Executing 8XY6\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "8XY6"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_8XY7(Chip8 *chip, uint8_t x, uint8_t y) {
-    debug_printf(chip->debug, "Executing 8XY7\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "8XY7"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_8XYE(Chip8 *chip, uint8_t x, uint8_t y) {
-    debug_printf(chip->debug, "Executing 8XYE\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "8XYE"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_9XY0(Chip8 *chip, uint8_t x, uint8_t y) {
-    debug_printf(chip->debug, "Executing 9XY0\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "9XY0"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
    
 void exec_ANNN(Chip8 *chip, uint16_t nnn) {
-    debug_printf(chip->debug, "Executing ANNN\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "ANNN"));
     chip->iregister = nnn;
-    debug_printf(chip->debug, "IRegister: %X\n", chip->iregister);
+    debug(chip->debugger, printf("IRegister: %X\n", chip->iregister));
 }
  
 void exec_BNNN(Chip8 *chip, uint16_t nnn) {
-    debug_printf(chip->debug, "Executing BNNN\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "BNNN"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
  
 void exec_CXNN(Chip8 *chip, uint8_t x, uint8_t nn) {
-    debug_printf(chip->debug, "Executing CXNN\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "CXNN"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
  
 void exec_DXYN(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n) {
-    debug_printf(chip->debug, "Executing DXYN\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "DXYN"));
     // Get the X/Y coords to draw the sprite 
     int x_coord = chip->registers[x] % SCREEN_WIDTH;
     int y_coord = chip->registers[y] % SCREEN_HEIGHT;
 
-    debug_printf(chip->debug, "x: %d, y: %d\n", x_coord, y_coord);
+    debug(chip->debugger, printf("x: %d, y: %d\n", x_coord, y_coord));
 
     // Premptively set VF to 0
     chip->registers[0xF] = 0;
@@ -419,12 +420,12 @@ void exec_DXYN(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n) {
         if (y_coord == SCREEN_HEIGHT) break; 
         
         uint8_t sprite = chip->memory[chip->iregister + i];
-        debug_printf(chip->debug, "Sprite at address %X: %X\n", chip->iregister + i, sprite);
+        debug(chip->debugger, printf("Sprite at address %X: %X\n", chip->iregister + i, sprite));
         int screen_idx = (y_coord * SCREEN_WIDTH) + x_coord;
-        debug_printf(chip->debug, "Screen Index: %d\n", screen_idx);
+        debug(chip->debugger, printf("Screen Index: %d\n", screen_idx));
 
         for (int j = 0; j < 8; j++) {
-            if (x_coord + j == SCREEN_WIDTH) { debug_printf(chip->debug, "Hit screen edge\n"); break; } 
+            if (x_coord + j == SCREEN_WIDTH) { debug(chip->debugger, printf("Hit screen edge\n")); break; } 
 
             if ((sprite & 128) == 128) {
                 if (chip->screen[screen_idx] == PIXEL_WHITE) {
@@ -443,56 +444,56 @@ void exec_DXYN(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n) {
 }
    
 void exec_EX9E(Chip8 *chip, uint8_t x) {
-    debug_printf(chip->debug, "Executing EX9E\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "EX9E"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_EXA1(Chip8 *chip, uint8_t x) {
-    debug_printf(chip->debug, "Executing EXA1\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "EXA1"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_FX07(Chip8 *chip, uint8_t x) {
-    debug_printf(chip->debug, "Executing FX07\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "FX07"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_FX15(Chip8 *chip, uint8_t x) {
-    debug_printf(chip->debug, "Executing FX15\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "FX15"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_FX18(Chip8 *chip, uint8_t x) {
-    debug_printf(chip->debug, "Executing FX18\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "FX18"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_FX1E(Chip8 *chip, uint8_t x) {
-    debug_printf(chip->debug, "Executing FX1E\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "FX1E"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_FX0A(Chip8 *chip, uint8_t x) {
-    debug_printf(chip->debug, "Executing FX0A\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "FX0A"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_FX29(Chip8 *chip, uint8_t x) {
-    debug_printf(chip->debug, "Executing FX29\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "FX29"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_FX33(Chip8 *chip, uint8_t x) {
-    debug_printf(chip->debug, "Executing FX33\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "FX33"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_FX55(Chip8 *chip, uint8_t x) {
-    debug_printf(chip->debug, "Executing FX55\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "FX55"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
 
 void exec_FX65(Chip8 *chip, uint8_t x) {
-    debug_printf(chip->debug, "Executing FX65\n");
+    debug(chip->debugger, halt_if_breakpoint(chip, "FX65"));
     printf("INSTRUCTION NOT YET IMPLEMENTED\n");
 }
