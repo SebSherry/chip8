@@ -38,12 +38,14 @@ int main(int argc, char *argv[]) {
     int scale = 10;
     int target_cycle_rate = 700;
     uint64_t delay = target_cycle_rate / 1000000;
+    uint64_t timer_cycle_rate = target_cycle_rate / 60;
     Display display;
     Chip8 chip;
     Debugger debugger = {0};
     bool quit = false;
     struct timespec now, last_cycle;
     uint64_t diff = 0;
+    int timer_counter = 0;
     int pitch = 0;
 
     if (argc < 2) {
@@ -82,6 +84,9 @@ int main(int argc, char *argv[]) {
     clock_gettime(CLOCK_MONOTONIC_RAW, &last_cycle);
     while (!quit) {
         quit = process_keyboard_input(&chip);
+        // This is needed for ESC to work during debug mode
+        if (quit) break;
+        
         clock_gettime(CLOCK_MONOTONIC_RAW, &now);
         diff = (now.tv_sec - last_cycle.tv_sec) * 1000000 +
                (now.tv_nsec - last_cycle.tv_sec) / 1000;
@@ -98,6 +103,12 @@ int main(int argc, char *argv[]) {
                 if (!quit && chip.debugger->stepping) {
                     quit = debug_prompt_user(chip.debugger, &chip);
                 }
+            }
+
+            timer_counter++;
+            if (timer_counter == timer_cycle_rate) {
+                update_timers(&chip);
+                timer_counter = 0;
             }
         }
     }

@@ -13,6 +13,7 @@ int load_rom(Chip8 *chip, char *rom_filename);
 void cycle(Chip8 *chip);
 // Fetch and Decode the next instruction
 void decode(Chip8 *chip, Instruction *instruction);   
+void update_timers(Chip8 *chip);
 
 // Instruction Implementations 
 void exec_00E0(Chip8 *chip);   

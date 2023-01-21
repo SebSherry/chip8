@@ -288,7 +288,16 @@ void decode(Chip8 *chip, Instruction *instruction) {
     chip->pc += 2;
 }
 
-   
+void update_timers(Chip8 *chip) {
+    if (chip->delay_timer > 0) {
+        chip->delay_timer--;
+    }
+
+    if (chip->sound_timer > 0) {
+        chip->sound_timer--;
+    }
+}
+
 // Instruction Implementations 
 void exec_00E0(Chip8 *chip) {
     debug(chip->debugger, halt_if_breakpoint(chip, "00E0"));
@@ -381,10 +390,7 @@ void exec_8XY4(Chip8 *chip, uint8_t x, uint8_t y) {
     uint8_t vy = chip->registers[y];
     
     chip->registers[x] = vx + vy;
-    
-    if (vy > UINT8_MAX - vx) {
-        chip->registers[0xF] = 1;
-    }
+    chip->registers[0xF] = vy > UINT8_MAX - vx ? 1 : 0;
 }
 
 void exec_8XY5(Chip8 *chip, uint8_t x, uint8_t y) {
@@ -394,7 +400,9 @@ void exec_8XY5(Chip8 *chip, uint8_t x, uint8_t y) {
     chip->registers[x] = vx - vy;
 
     // Set VF to 1, then check for underflow
-    chip->registers[0xF] = 1;
+    if (vx > vy) {
+        chip->registers[0xF] = 1;
+    }
 
     if (vy > vx && vy < UINT8_MAX - vx) {
         chip->registers[0xF] = 0;
@@ -422,7 +430,9 @@ void exec_8XY7(Chip8 *chip, uint8_t x, uint8_t y) {
     chip->registers[x] = vy - vx;
 
     // Set VF to 1, then check for underflow
-    chip->registers[0xF] = 1;
+    if (vy > vx) {
+        chip->registers[0xF] = 1;
+    }
 
     if (vx > vy && vx < UINT8_MAX - vy) {
         chip->registers[0xF] = 0;
@@ -434,12 +444,12 @@ void exec_8XYE(Chip8 *chip, uint8_t x, uint8_t y) {
     // Set VX to VY?
     //chip->registers[x] = chip->registers[y];
 
-    // Shift 1 bit to the right
+    // Shift 1 bit to the left
     uint8_t original_vx = chip->registers[x];
     chip->registers[x] = original_vx<<1;
 
     // Set VF to the result of the shifted bit
-    chip->registers[0xF] = (original_vx & (1<<7));
+    chip->registers[0xF] = (original_vx & (1<<7)) > 0;
 }
 
 void exec_9XY0(Chip8 *chip, uint8_t x, uint8_t y) {
