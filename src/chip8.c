@@ -2,6 +2,8 @@
 #include "io.h"
 #include "debug.h"
 #include "structs.h"
+#include <time.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -43,6 +45,9 @@ void init_chip8(Chip8 *chip, Debugger *debug) {
     for (int i = 0; i < FONTSET_SIZE; ++i) { 
         chip->memory[FONT_START_MEMORY_ADDR + i] = fontset[i]; 
     } 
+
+    // Seed random generator for CXNN instruction
+    srand(time(NULL));
 }
 
 int load_rom(Chip8 *chip, char *rom_filename) {
@@ -372,27 +377,69 @@ void exec_8XY3(Chip8 *chip, uint8_t x, uint8_t y) {
 
 void exec_8XY4(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XY4"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    uint8_t vx = chip->registers[x];
+    uint8_t vy = chip->registers[y];
+    
+    chip->registers[x] = vx + vy;
+    
+    if (vy > UINT8_MAX - vx) {
+        chip->registers[0xF] = 1;
+    }
 }
 
 void exec_8XY5(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XY5"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    uint8_t vx = chip->registers[x];
+    uint8_t vy = chip->registers[y];
+    chip->registers[x] = vx - vy;
+
+    // Set VF to 1, then check for underflow
+    chip->registers[0xF] = 1;
+
+    if (vy > vx && vy < UINT8_MAX - vx) {
+        chip->registers[0xF] = 0;
+    }
 }
 
 void exec_8XY6(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XY6"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    
+    // Set VX to VY?
+    //chip->registers[x] = chip->registers[y];
+
+    // Shift 1 bit to the right
+    uint8_t original_vx = chip->registers[x];
+    chip->registers[x] = original_vx>>1;
+
+    // Set VF to the result of the shifted bit
+    chip->registers[0xF] = (original_vx & (1<<0));
 }
 
 void exec_8XY7(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XY7"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    uint8_t vx = chip->registers[x];
+    uint8_t vy = chip->registers[y];
+    chip->registers[x] = vy - vx;
+
+    // Set VF to 1, then check for underflow
+    chip->registers[0xF] = 1;
+
+    if (vx > vy && vx < UINT8_MAX - vy) {
+        chip->registers[0xF] = 0;
+    }
 }
 
 void exec_8XYE(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XYE"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    // Set VX to VY?
+    //chip->registers[x] = chip->registers[y];
+
+    // Shift 1 bit to the right
+    uint8_t original_vx = chip->registers[x];
+    chip->registers[x] = original_vx<<1;
+
+    // Set VF to the result of the shifted bit
+    chip->registers[0xF] = (original_vx & (1<<7));
 }
 
 void exec_9XY0(Chip8 *chip, uint8_t x, uint8_t y) {
@@ -411,12 +458,12 @@ void exec_ANNN(Chip8 *chip, uint16_t nnn) {
  
 void exec_BNNN(Chip8 *chip, uint16_t nnn) {
     debug(chip->debugger, halt_if_breakpoint(chip, "BNNN"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    chip->pc = nnn + chip->registers[0];
 }
  
 void exec_CXNN(Chip8 *chip, uint8_t x, uint8_t nn) {
     debug(chip->debugger, halt_if_breakpoint(chip, "CXNN"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+    chip->registers[x] = rand() & nn;
 }
  
 void exec_DXYN(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n) {
@@ -525,12 +572,27 @@ void exec_FX0A(Chip8 *chip, uint8_t x) {
 
 void exec_FX29(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "FX29"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+
+    // We only want the first nibble
+    uint8_t font_char = x>>4;
+
+    chip->iregister = FONT_START_MEMORY_ADDR + (font_char * 5);
 }
 
 void exec_FX33(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "FX33"));
-    printf("INSTRUCTION NOT YET IMPLEMENTED\n");
+
+    uint8_t ones, tens, hundreds = 0;
+    uint8_t vx = chip->registers[x];
+
+    ones= vx % 10;
+    tens = ((vx - ones) % 100) / 10;
+    hundreds = (vx - tens - ones) / 100;
+    
+    uint16_t iregister = chip->iregister;
+    chip->memory[iregister] = hundreds;
+    chip->memory[iregister+1] = tens;
+    chip->memory[iregister+2] = ones;
 }
 
 void exec_FX55(Chip8 *chip, uint8_t x) {
