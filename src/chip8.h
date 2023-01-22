@@ -1,16 +1,15 @@
 #ifndef CHIP8_H_
 #define CHIP8_H_
 
-#define FONTSET_SIZE 80
-#define FONT_START_MEMORY_ADDR 0x50
-#define ROM_START_MEMORY_ADDR 0x200 
-
-#include <stdint.h>
 #include "structs.h"
+#include "consts.h"
+#include <stdint.h>
+#include <stdbool.h>
 
-void init_chip8(Chip8 *chip, Debugger *debug);
+void init_chip8(Chip8 *chip, Debugger *debug, uint32_t foreground, uint32_t background);
+void cleanup_chip8(Chip8 *chip);
 int load_rom(Chip8 *chip, char *rom_filename);
-void cycle(Chip8 *chip);
+bool cycle(Chip8 *chip);
 // Fetch and Decode the next instruction
 void decode(Chip8 *chip, Instruction *instruction);   
 void update_timers(Chip8 *chip);

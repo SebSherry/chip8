@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 void init_debugger(Debugger *debugger) {
     // By default we step through each instruction
@@ -49,7 +50,10 @@ void init_debugger(Debugger *debugger) {
     strcpy(debugger->instruction_map[31], "FX33\0");
     strcpy(debugger->instruction_map[32], "FX55\0");
     strcpy(debugger->instruction_map[33], "FX65\0");
-    printf("Done\n");
+}
+
+void cleanup_debugger(Debugger *debugger) {
+    free(debugger);
 }
 
 int debug_prompt_user(Debugger *debugger, Chip8 *chip) {
@@ -74,16 +78,16 @@ int debug_prompt_user(Debugger *debugger, Chip8 *chip) {
             case 'b':
                 // We want to loop regardless
                 valid = false;
-                printf("1.  00E0    11. 8XY1    21. BNNN    31. FX29\n");
-                printf("2.  00EE    12. 8XY2    22. CXNN    32. FX33\n");
-                printf("3.  1NNN    13. 8XY3    23. DXYN    33. FX55\n");
-                printf("4.  2NNN    14. 8XY4    24. EX9E    34. FX65\n");
-                printf("5.  3XNN    15. 8XY5    25. EXA1\n");
-                printf("6.  4XNN    16. 8XY6    26. FX07\n");
-                printf("7.  5XY0    17. 8XY7    27. FX15\n");
-                printf("8.  6XNN    18. 8XYE    28. FX18\n");
-                printf("9.  7XNN    19. 9XY0    29. FX1E\n");
-                printf("10. 8XY0    20. ANNN    30. FX0A\n");
+                printf("1.  00E0 Clear    11. 8XY1 BIN OR   21. BNNN Jump OFF  31. FX29 Font Char \n");
+                printf("2.  00EE Return   12. 8XY2 BIN AND  22. CXNN Random    32. FX33 Decimal\n");
+                printf("3.  1NNN Jump     13. 8XY3 LOG XOR  23. DXYN Display   33. FX55 Store\n");
+                printf("4.  2NNN Sub      14. 8XY4 ADD XY   24. EX9E Skip Key  34. FX65 Load\n");
+                printf("5.  3XNN Skip=    15. 8XY5 SUB XY   25. EXA1 Skip !Key\n");
+                printf("6.  4XNN Skip!=   16. 8XY6 RSHIFT   26. FX07 X = Delay\n");
+                printf("7.  5XY0 Skipx=y  17. 8XY7 SUB YX   27. FX15 Delay\n");
+                printf("8.  6XNN Set NN   18. 8XYE LSHIFT   28. FX18 Sound\n");
+                printf("9.  7XNN Add NN   19. 9XY0 Skipx!=y 29. FX1E IDX + X\n");
+                printf("10. 8XY0 Set x=y  20. ANNN Set IDX  30. FX0A Get Key\n");
                 printf("Please select an instruction: ");
                 
                 int selection;

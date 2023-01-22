@@ -1,52 +1,24 @@
 #include "chip8.h"
+#include "consts.h"
 #include "debug.h"
 #include "io.h"
 #include "structs.h"
+#include "args.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
-typedef struct {
-  char *rom;
-  int debug;
-} Args;
-
-void usage() { printf("Usage: ./chip8 [--debug] <rom file>\n"); }
-
-int read_args(Args *args, int argc, char *argv[]) {
-  args->rom = NULL;
-  args->debug = 0;
-
-  for (int i = 1; i < argc; i++) {
-      if (argv[i][0] == '-') {
-          if (strcmp(argv[i], "--debug") || strcmp(argv[i], "-d")) {
-              args->debug = 1;
-          } else {
-              printf("Invalid option: %s", argv[i]);
-              return 1;
-          }
-      } else if (args->rom == NULL) {
-          args->rom = argv[i];
-      }
-  }
-
-  return 0;
-}
-
 int main(int argc, char *argv[]) {
-    int scale = 10;
-    int target_cycle_rate = 700;
-    uint64_t delay = target_cycle_rate / 1000000;
-    uint64_t timer_cycle_rate = target_cycle_rate / 60;
+    uint64_t delay, timer_cycle_rate;
     Display display;
     Chip8 chip;
-    Debugger debugger = {0};
+    Debugger *debugger = NULL;
     bool quit = false;
     struct timespec now, last_cycle;
     uint64_t diff = 0;
     int timer_counter = 0;
-    int pitch = 0;
 
     if (argc < 2) {
         usage();
@@ -58,12 +30,21 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (args.debug) {
-        init_debugger(&debugger);
-        init_chip8(&chip, &debugger);
-    } else {
-        init_chip8(&chip, NULL);
+    if (args.help) {
+        usage();
+        return 0;
     }
+
+    if (args.debug) {
+        debugger = malloc(sizeof(Debugger));
+        if (debugger == NULL) {
+            printf("ERROR: Failed to assign memory for debugger!\n");
+            return 1;
+        }
+        init_debugger(debugger);
+    }
+
+    init_chip8(&chip, debugger, args.foreground, args.background);
 
     if (load_rom(&chip, args.rom)) {
         // Exit because we found an error
@@ -71,21 +52,23 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    pitch = sizeof(chip.screen[0]) * SCREEN_WIDTH;
-
     // Startup SDL
-    if (!init_display(&display, scale)) {
+    if (!init_display(&display, args.scale)) {
         printf("Failed to initialize display\n");
         return 1;
     }
 
-    update_display(&display, &chip.screen, pitch);
+    update_display(&display, &chip.screen, PITCH);
+
+    // Calculate CPU timing 
+    delay = args.target_cycles / 1000000;
+    timer_cycle_rate = args.target_cycles / 60;
 
     clock_gettime(CLOCK_MONOTONIC_RAW, &last_cycle);
     while (!quit) {
         quit = process_keyboard_input(&chip);
         // This is needed for ESC to work during debug mode
-        if (quit) break;
+        if (quit) continue;
         
         clock_gettime(CLOCK_MONOTONIC_RAW, &now);
         diff = (now.tv_sec - last_cycle.tv_sec) * 1000000 +
@@ -94,18 +77,21 @@ int main(int argc, char *argv[]) {
         if (diff > delay) {
             last_cycle = now;
 
-            cycle(&chip);
-
-            update_display(&display, &chip.screen, pitch);
-
             if (chip.debugger != NULL) {
                 quit = chip.debugger->exit;
                 if (!quit && chip.debugger->stepping) {
                     quit = debug_prompt_user(chip.debugger, &chip);
                 }
+
+                // Prevent execution of instruction when we quit the debugger
+                if (quit) continue;
             }
+            
+            // Execute a single instruction and update the display as needed
+            if (cycle(&chip)) update_display(&display, &chip.screen, PITCH);
 
             timer_counter++;
+            // 60Hz Loop
             if (timer_counter == timer_cycle_rate) {
                 update_timers(&chip);
                 timer_counter = 0;
@@ -113,8 +99,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Free and close SDL
+    // Free and close SDL and Chip8
     cleanup_display(&display);
+    cleanup_chip8(&chip);
 
     return 0;
 }

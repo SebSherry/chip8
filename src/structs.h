@@ -1,11 +1,9 @@
 #ifndef STRUCTS_H_
 #define STRUCTS_H_
 
+#include "consts.h"
 #include <stdint.h>
-#include "io.h"
-
-#define NUM_OF_INSTRUCTIONS 34
-#define NUM_OF_REGISTERS 16
+#include <stdbool.h>
 
 typedef struct {
     bool stepping;
@@ -25,6 +23,8 @@ typedef struct {
     uint16_t stack[16];
     uint32_t screen[SCREEN_SIZE];
     bool keys_pressed[16];
+    uint32_t foreground_colour;
+    uint32_t background_colour;
 
     // Debugger, is null if debugging disabled
     Debugger *debugger;

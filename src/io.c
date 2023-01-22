@@ -2,6 +2,7 @@
 #include <SDL2/SDL_keycode.h>
 #include <stdbool.h>
 #include "io.h"
+#include "consts.h"
 #include "structs.h"
 
 bool init_display(Display *display, int scale) {

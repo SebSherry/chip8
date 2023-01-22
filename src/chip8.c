@@ -2,26 +2,32 @@
 #include "io.h"
 #include "debug.h"
 #include "structs.h"
+#include "consts.h"
 #include <time.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
-void init_chip8(Chip8 *chip, Debugger *debug) {
+void init_chip8(Chip8 *chip, Debugger *debug, uint32_t foreground, uint32_t background) {
     chip->delay_timer = 0;
     chip->sound_timer = 0;
     chip->pc = 0;
     chip->iregister = 0;
     chip->stack_pointer = 0;
     chip->debugger = debug;
-
+    chip->foreground_colour = foreground;
+    chip->background_colour = background; 
+    
     memset(chip->memory, 0, sizeof(chip->memory));
     memset(chip->registers, 0, sizeof(chip->registers));
-    memset(chip->screen, 0, sizeof(chip->screen));
     memset(chip->stack, 0, sizeof(chip->stack));
     memset(chip->keys_pressed, 0, sizeof(chip->keys_pressed));
 
+    // Call 00E0 to keep the clear screen behaviour consistent
+    debug(chip->debugger, printf("Initializing Screen with 00E0\n"));
+    exec_00E0(chip);
+    
     // Load font into memory
     uint8_t fontset[FONTSET_SIZE] = { 
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0 
@@ -48,6 +54,15 @@ void init_chip8(Chip8 *chip, Debugger *debug) {
 
     // Seed random generator for CXNN instruction
     srand(time(NULL));
+}
+
+void cleanup_chip8(Chip8 *chip) {
+    if (chip->debugger != NULL) {
+        cleanup_debugger(chip->debugger);
+        chip->debugger = NULL;
+    }
+    
+    chip = NULL;
 }
 
 int load_rom(Chip8 *chip, char *rom_filename) {
@@ -91,13 +106,15 @@ int load_rom(Chip8 *chip, char *rom_filename) {
     return result;
 }
 
-void cycle(Chip8 *chip) {
+bool cycle(Chip8 *chip) {
     Instruction instruction = { 0 };
+    bool update_display = false;
 
     // Fetch and Decode the next instruction
     decode(chip, &instruction);
     
     debug(chip->debugger, debug_instruction(&instruction));
+    
 
     switch (instruction.instruction) {
         case 0x0:
@@ -105,6 +122,7 @@ void cycle(Chip8 *chip) {
                 //00E0 Clear Screen    
                 case 0x00E0:
                     exec_00E0(chip);
+                    update_display = true;
                     break;
                 //00EE Return from Subroutine 
                 case 0x00EE:
@@ -214,6 +232,7 @@ void cycle(Chip8 *chip) {
         case 0xD:
             // DXYN Display 
             exec_DXYN(chip, instruction.x, instruction.y, instruction.n);
+            update_display = true;
             break;
         case 0xE:
             if (instruction.nn == 0x9E) {
@@ -272,7 +291,9 @@ void cycle(Chip8 *chip) {
         default:
             printf("UNDEFINED INSTRUCTION %X%X%X%X\n", instruction.instruction, instruction.x, instruction.y, instruction.n);
             break;
-    } 
+    }
+
+    return update_display; 
 }
 
 void decode(Chip8 *chip, Instruction *instruction) {
@@ -290,10 +311,12 @@ void decode(Chip8 *chip, Instruction *instruction) {
 
 void update_timers(Chip8 *chip) {
     if (chip->delay_timer > 0) {
+        debug(chip->debugger, printf("Decrement Delay Timer\n"));
         chip->delay_timer--;
     }
 
     if (chip->sound_timer > 0) {
+        debug(chip->debugger, printf("Decrement Sound Timer\n"));
         chip->sound_timer--;
     }
 }
@@ -301,7 +324,10 @@ void update_timers(Chip8 *chip) {
 // Instruction Implementations 
 void exec_00E0(Chip8 *chip) {
     debug(chip->debugger, halt_if_breakpoint(chip, "00E0"));
-    memset(chip->screen, 0, sizeof(chip->screen)); 
+    // Since the colours are configurable we can't use memset
+    for (int i = 0; i < SCREEN_SIZE; i++) {
+        chip->screen[i] = chip->background_colour;
+    }
 }
   
 void exec_00EE(Chip8 *chip) {
@@ -372,16 +398,19 @@ void exec_8XY0(Chip8 *chip, uint8_t x, uint8_t y) {
 void exec_8XY1(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XY1"));
     chip->registers[x] = chip->registers[x] | chip->registers[y];
+    chip->registers[0xF] = 0;
 }
 
 void exec_8XY2(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XY2"));
     chip->registers[x] = chip->registers[x] & chip->registers[y];
+    chip->registers[0xF] = 0;
 }
 
 void exec_8XY3(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XY3"));
     chip->registers[x] = chip->registers[x] ^ chip->registers[y];
+    chip->registers[0xF] = 0;
 }
 
 void exec_8XY4(Chip8 *chip, uint8_t x, uint8_t y) {
@@ -413,7 +442,7 @@ void exec_8XY6(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XY6"));
     
     // Set VX to VY?
-    //chip->registers[x] = chip->registers[y];
+    chip->registers[x] = chip->registers[y];
 
     // Shift 1 bit to the right
     uint8_t original_vx = chip->registers[x];
@@ -442,7 +471,7 @@ void exec_8XY7(Chip8 *chip, uint8_t x, uint8_t y) {
 void exec_8XYE(Chip8 *chip, uint8_t x, uint8_t y) {
     debug(chip->debugger, halt_if_breakpoint(chip, "8XYE"));
     // Set VX to VY?
-    //chip->registers[x] = chip->registers[y];
+    chip->registers[x] = chip->registers[y];
 
     // Shift 1 bit to the left
     uint8_t original_vx = chip->registers[x];
@@ -500,11 +529,11 @@ void exec_DXYN(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n) {
             if (x_coord + j == SCREEN_WIDTH) { debug(chip->debugger, printf("Hit screen edge\n")); break; } 
 
             if ((sprite & 128) == 128) {
-                if (chip->screen[screen_idx] == PIXEL_WHITE) {
-                    chip->screen[screen_idx] = PIXEL_BLACK;
+                if (chip->screen[screen_idx] == chip->foreground_colour) {
+                    chip->screen[screen_idx] = chip->background_colour;
                     chip->registers[0xF] = 1;
                 } else {
-                    chip->screen[screen_idx] = PIXEL_WHITE;
+                    chip->screen[screen_idx] = chip->foreground_colour;
                 }
             }
             
@@ -610,7 +639,8 @@ void exec_FX55(Chip8 *chip, uint8_t x) {
 
     // <= as this opperation is inclusive
     for (int j = 0; j <= x; j++) {
-        chip->memory[chip->iregister+j] = chip->registers[j];   
+        chip->memory[chip->iregister] = chip->registers[j];   
+        chip->iregister++;
     }
 }
 
@@ -618,6 +648,7 @@ void exec_FX65(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "FX65"));
     // <= as this opperation is inclusive
     for (int j = 0; j <= x; j++) {
-        chip->registers[j] = chip->memory[chip->iregister+j];   
+        chip->registers[j] = chip->memory[chip->iregister];   
+        chip->iregister++;
     }
 }
