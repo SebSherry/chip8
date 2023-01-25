@@ -135,14 +135,8 @@ int debug_prompt_user(Debugger *debugger, Chip8 *chip) {
                 }
 
                 // Key state
-                printf("Keys Pressed: ");
-                for (int i = 0; i < 16; i++) {
-                    printf(" %d", chip->keys_pressed[i]);
-                }
-                printf("\nKeys Snapshot:");
-                for (int i = 0; i < 16; i++) {
-                    printf(" %d", chip->keys_snapshot[i]);
-                }
+                printf("Keys Pressed:  %d\n", chip->keys_pressed);
+                printf("Keys Snapshot: %d\n", chip->keys_snapshot);
                 
                 break;
             default:

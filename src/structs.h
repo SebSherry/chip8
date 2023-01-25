@@ -22,11 +22,11 @@ typedef struct {
     uint16_t pc;
     uint16_t iregister;
     uint16_t stack[16];
+    uint16_t keys_pressed;
+    uint16_t keys_snapshot;
     uint32_t screen[SCREEN_SIZE];
     uint32_t foreground_colour;
     uint32_t background_colour;
-    bool keys_pressed[16];
-    bool keys_snapshot[16];
     bool display_interrupt_triggered;
 
     // Debugger, is null if debugging disabled

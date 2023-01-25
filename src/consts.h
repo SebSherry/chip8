@@ -37,4 +37,22 @@
 // Timing
 #define DEFAULT_TARGET_CYCLES_PER_SECOND 700
 
+// Keys
+#define KEY_0_MASK 1
+#define KEY_1_MASK 2
+#define KEY_2_MASK 4
+#define KEY_3_MASK 8
+#define KEY_4_MASK 16
+#define KEY_5_MASK 32
+#define KEY_6_MASK 64
+#define KEY_7_MASK 128
+#define KEY_8_MASK 256
+#define KEY_9_MASK 512
+#define KEY_A_MASK 1024
+#define KEY_B_MASK 2048
+#define KEY_C_MASK 4096
+#define KEY_D_MASK 8192
+#define KEY_E_MASK 16384
+#define KEY_F_MASK 32768
+
 #endif

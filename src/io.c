@@ -53,191 +53,102 @@ bool process_keyboard_input(Chip8 *chip) {
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
-        switch (event.type) {
-            case SDL_QUIT: {
-                return true;
-            } break;
-
-            case SDL_KEYDOWN:
-            {
-                switch(event.key.keysym.sym)
-                {
-                    case SDLK_ESCAPE:
-                    {
-                        return true;      
-                    }
-                    case SDLK_1:
-                    {
-                        chip->keys_pressed[0x1] = true;
-                        break;
-                    } 
-                    case SDLK_2:
-                    {
-                        chip->keys_pressed[0x2] = true;
-                        break;
-                    } 
-                    case SDLK_3:
-                    {
-                        chip->keys_pressed[0x3] = true;
-                        break;
-                    } 
-                    case SDLK_4:
-                    {
-                        chip->keys_pressed[0xC] = true;
-                        break;
-                    } 
-                    case SDLK_q:
-                    {
-                        chip->keys_pressed[0x4] = true;
-                        break;
-                    } 
-                    case SDLK_w:
-                    {
-                        chip->keys_pressed[0x5] = true;
-                        break;
-                    } 
-                    case SDLK_e:
-                    {
-                        chip->keys_pressed[0x6] = true;
-                        break;
-                    } 
-                    case SDLK_r:
-                    {
-                        chip->keys_pressed[0xD] = true;
-                        break;
-                    } 
-                    case SDLK_a:
-                    {
-                        chip->keys_pressed[0x7] = true;
-                        break;
-                    } 
-                    case SDLK_s:
-                    {
-                        chip->keys_pressed[0x8] = true;
-                        break;
-                    } 
-                    case SDLK_d:
-                    {
-                        chip->keys_pressed[0x9] = true;
-                        break;
-                    } 
-                    case SDLK_f:
-                    {
-                        chip->keys_pressed[0xE] = true;
-                        break;
-                    } 
-                    case SDLK_z:
-                    {
-                        chip->keys_pressed[0xA] = true;
-                        break;
-                    } 
-                    case SDLK_x:
-                    {
-                        chip->keys_pressed[0x0] = true;
-                        break;
-                    } 
-                    case SDLK_c:
-                    {
-                        chip->keys_pressed[0xB] = true;
-                        break;
-                    } 
-                    case SDLK_v:
-                    {
-                        chip->keys_pressed[0xF] = true;
-                        break;
-                    } break;
-                }    
-            } break;
-                 
-            case SDL_KEYUP:
-            {
-                switch(event.key.keysym.sym)
-                {
-                    case SDLK_1:
-                    {
-                        chip->keys_pressed[0x1] = false;
-                        break;
-                    } 
-                    case SDLK_2:
-                    {
-                        chip->keys_pressed[0x2] = false;
-                        break;
-                    } 
-                    case SDLK_3:
-                    {
-                        chip->keys_pressed[0x3] = false;
-                        break;
-                    } 
-                    case SDLK_4:
-                    {
-                        chip->keys_pressed[0xC] = false;
-                        break;
-                    } 
-                    case SDLK_q:
-                    {
-                        chip->keys_pressed[0x4] = false;
-                        break;
-                    } 
-                    case SDLK_w:
-                    {
-                        chip->keys_pressed[0x5] = false;
-                        break;
-                    } 
-                    case SDLK_e:
-                    {
-                        chip->keys_pressed[0x6] = false;
-                        break;
-                    } 
-                    case SDLK_r:
-                    {
-                        chip->keys_pressed[0xD] = false;
-                        break;
-                    } 
-                    case SDLK_a:
-                    {
-                        chip->keys_pressed[0x7] = false;
-                        break;
-                    } 
-                    case SDLK_s:
-                    {
-                        chip->keys_pressed[0x8] = false;
-                        break;
-                    } 
-                    case SDLK_d:
-                    {
-                        chip->keys_pressed[0x9] = false;
-                        break;
-                    } 
-                    case SDLK_f:
-                    {
-                        chip->keys_pressed[0xE] = false;
-                        break;
-                    } 
-                    case SDLK_z:
-                    {
-                        chip->keys_pressed[0xA] = false;
-                        break;
-                    } 
-                    case SDLK_x:
-                    {
-                        chip->keys_pressed[0x0] = false;
-                        break;
-                    } 
-                    case SDLK_c:
-                    {
-                        chip->keys_pressed[0xB] = false;
-                        break;
-                    } 
-                    case SDLK_v:
-                    {
-                        chip->keys_pressed[0xF] = false;
-                        break;
-                    } break;
-                }    
-            } break;    
+        if (event.type == SDL_QUIT) {
+            return true;
+            break;
         } 
-    }
 
+        if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+            switch(event.key.keysym.sym)
+            {
+                case SDLK_ESCAPE:
+                {
+                    return true;      
+                }
+                case SDLK_1:
+                {
+                    chip->keys_pressed ^= KEY_1_MASK;
+                    break;
+                } 
+                case SDLK_2:
+                {
+                    chip->keys_pressed ^= KEY_2_MASK;
+                    break;
+                } 
+                case SDLK_3:
+                {
+                    chip->keys_pressed ^= KEY_3_MASK;
+                    break;
+                } 
+                case SDLK_4:
+                {
+                    chip->keys_pressed ^= KEY_C_MASK;
+                    break;
+                } 
+                case SDLK_q:
+                {
+                    chip->keys_pressed ^= KEY_4_MASK;
+                    break;
+                } 
+                case SDLK_w:
+                {
+                    chip->keys_pressed ^= KEY_5_MASK;
+                    break;
+                } 
+                case SDLK_e:
+                {
+                    chip->keys_pressed ^= KEY_6_MASK;
+                    break;
+                } 
+                case SDLK_r:
+                {
+                    chip->keys_pressed ^= KEY_D_MASK;
+                    break;
+                } 
+                case SDLK_a:
+                {
+                    chip->keys_pressed ^= KEY_7_MASK;
+                    break;
+                } 
+                case SDLK_s:
+                {
+                    chip->keys_pressed ^= KEY_8_MASK;
+                    break;
+                } 
+                case SDLK_d:
+                {
+                    chip->keys_pressed ^= KEY_9_MASK;
+                    break;
+                } 
+                case SDLK_f:
+                {
+                    chip->keys_pressed ^= KEY_E_MASK;
+                    break;
+                } 
+                case SDLK_z:
+                {
+                    chip->keys_pressed ^= KEY_A_MASK;
+                    break;
+                } 
+                case SDLK_x:
+                {
+                    chip->keys_pressed ^= KEY_0_MASK;
+                    break;
+                } 
+                case SDLK_c:
+                {
+                    chip->keys_pressed ^= KEY_B_MASK;
+                    break;
+                } 
+                case SDLK_v:
+                {
+                    chip->keys_pressed ^= KEY_F_MASK;
+                    break;
+                } 
+            }    
+        }
+    }
+    
     return false;
 }
 

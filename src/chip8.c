@@ -20,12 +20,12 @@ void init_chip8(Chip8 *chip, Debugger *debug, uint32_t foreground, uint32_t back
     chip->background_colour = background; 
     chip->waiting_to_draw = 0;
     chip->display_interrupt_triggered = false;
+    chip->keys_pressed = 0;
+    chip->keys_snapshot = 0;
     
     memset(chip->memory, 0, sizeof(chip->memory));
     memset(chip->registers, 0, sizeof(chip->registers));
     memset(chip->stack, 0, sizeof(chip->stack));
-    memset(chip->keys_pressed, 0, sizeof(chip->keys_pressed));
-    memset(chip->keys_snapshot, 0, sizeof(chip->keys_snapshot));
 
     // Call 00E0 to keep the clear screen behaviour consistent
     debug(chip->debugger, printf("Initializing Screen with 00E0\n"));
@@ -556,7 +556,9 @@ void exec_EX9E(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "EX9E"));
 
     // TODO Bounds checking?
-    if (chip->keys_pressed[chip->registers[x]]) {
+    uint16_t key = (chip->keys_pressed>>chip->registers[x]) & 1;
+    
+    if (key) {
         chip->pc += 2;   
     }
 }
@@ -565,7 +567,9 @@ void exec_EXA1(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "EXA1"));
     
     // TODO Bounds checking?
-    if (!chip->keys_pressed[chip->registers[x]]) {
+    uint16_t key = (chip->keys_pressed>>chip->registers[x]) & 1;
+    
+    if (!key) {
         chip->pc += 2;   
     }
 }
@@ -601,22 +605,27 @@ void exec_FX0A(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "FX0A"));
 
     int pressed = -1;
+    if (chip->keys_pressed != chip->keys_snapshot) {
+        uint16_t diff = chip->keys_snapshot;
+        uint16_t current = chip->keys_pressed;
 
-    for (int i = 0; i < 16; i++) {
-        if (!chip->keys_pressed[i] && chip->keys_snapshot[i]) {
-            pressed = i;
-            break;
+        for (int i = 0; i < 16; i++) {
+            if (((current & 1) == 0) && ((diff & 1) == 1)) {
+                pressed = i;
+                break;
+            }
+            diff >>= 1;
+            current >>= 1;
         }
 
-        // Update the snapshot
-        chip->keys_snapshot[i] = chip->keys_pressed[i];
-    }    
+        chip->keys_snapshot = chip->keys_pressed;
+    }
 
 
     if (pressed > -1) {
         chip->registers[x] = pressed;
         // Set the snapshot to 0 to avoid weird state
-        memset(chip->keys_snapshot, 0, sizeof(chip->keys_snapshot));
+        chip->keys_snapshot = 0;
     } else {
         // Decrement the PC to halt execution
         chip->pc -= 2;
