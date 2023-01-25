@@ -11,14 +11,13 @@
 #include <time.h>
 
 int main(int argc, char *argv[]) {
-    uint64_t delay, timer_cycle_rate;
+    uint64_t delay, cycles_per_frame;
     Display display;
     Chip8 chip;
     Debugger *debugger = NULL;
     bool quit = false;
     struct timespec now, last_cycle;
     uint64_t diff = 0;
-    int timer_counter = 0;
 
     if (argc < 2) {
         usage();
@@ -61,8 +60,8 @@ int main(int argc, char *argv[]) {
     update_display(&display, &chip.screen, PITCH);
 
     // Calculate CPU timing 
-    delay = args.target_cycles / 1000000;
-    timer_cycle_rate = args.target_cycles / 60;
+    delay = 1000000 / 60;
+    cycles_per_frame = args.target_cycles / 60;
 
     clock_gettime(CLOCK_MONOTONIC_RAW, &last_cycle);
     while (!quit) {
@@ -72,30 +71,31 @@ int main(int argc, char *argv[]) {
         
         clock_gettime(CLOCK_MONOTONIC_RAW, &now);
         diff = (now.tv_sec - last_cycle.tv_sec) * 1000000 +
-               (now.tv_nsec - last_cycle.tv_sec) / 1000;
+               (now.tv_nsec - last_cycle.tv_nsec) / 1000;
 
         if (diff > delay) {
             last_cycle = now;
 
-            if (chip.debugger != NULL) {
-                quit = chip.debugger->exit;
-                if (!quit && chip.debugger->stepping) {
-                    quit = debug_prompt_user(chip.debugger, &chip);
+            update_display(&display, &chip.screen, PITCH);
+            update_timers(&chip);
+
+            if (chip.waiting_to_draw >= 2) {
+                chip.display_interrupt_triggered = true;
+            }
+
+            for (int i = 0; i < cycles_per_frame; i++) {
+                if (chip.debugger != NULL) {
+                    quit = chip.debugger->exit;
+                    if (!quit && chip.debugger->stepping) {
+                        quit = debug_prompt_user(chip.debugger, &chip);
+                    }
+
+                    // Prevent execution of instruction when we quit the debugger
+                    if (quit) continue;
                 }
-
-                // Prevent execution of instruction when we quit the debugger
-                if (quit) continue;
-            }
-            
-            // Execute a single instruction and update the display as needed
-            if (cycle(&chip)) update_display(&display, &chip.screen, PITCH);
-
-            timer_counter++;
-            // 60Hz Loop
-            if (timer_counter == timer_cycle_rate) {
-                update_timers(&chip);
-                timer_counter = 0;
-            }
+                cycle(&chip);
+                
+            } 
         }
     }
 

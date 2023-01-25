@@ -15,16 +15,19 @@ typedef struct {
 typedef struct {
     uint8_t delay_timer;
     uint8_t sound_timer;
-    uint16_t pc;
-    uint16_t iregister;
     uint8_t memory[4096];
     uint8_t registers[NUM_OF_REGISTERS];
     uint8_t stack_pointer;
+    uint8_t waiting_to_draw;
+    uint16_t pc;
+    uint16_t iregister;
     uint16_t stack[16];
     uint32_t screen[SCREEN_SIZE];
-    bool keys_pressed[16];
     uint32_t foreground_colour;
     uint32_t background_colour;
+    bool keys_pressed[16];
+    bool keys_snapshot[16];
+    bool display_interrupt_triggered;
 
     // Debugger, is null if debugging disabled
     Debugger *debugger;

@@ -3,6 +3,7 @@
 #include "structs.h"
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -98,8 +99,22 @@ int debug_prompt_user(Debugger *debugger, Chip8 *chip) {
                 if (selection < 1 || selection > 34) {
                     printf("Invalid input\n");
                 } else {
-                    printf("Setting breakpoint on %s\n", debugger->instruction_map[selection-1]);
-                    debugger->breakpoints[selection-1] = true;
+                    if (debugger->breakpoints[selection-1]) {
+                        printf("Breakpoint is ready set for this instruction. Would you like to remove it? (y/n): ");
+                        char response = getchar();
+                        // Get char again to remove the newline
+                        // TODO handle longer input
+                        getchar();
+                        if (response == 'y') {
+                            printf("Removing breakpoint on %s\n", debugger->instruction_map[selection-1]);
+                            debugger->breakpoints[selection-1] = false;
+                        }
+                        // Ignore invalid input/negative respone
+                        
+                    } else {
+                        printf("Setting breakpoint on %s\n", debugger->instruction_map[selection-1]);
+                        debugger->breakpoints[selection-1] = true;
+                    }
                 }
                 break;
             case 'm':
@@ -117,6 +132,16 @@ int debug_prompt_user(Debugger *debugger, Chip8 *chip) {
                 // Registers
                 for (int r = 0; r < NUM_OF_REGISTERS; r++) {
                     printf("V%X:          %X (%d)\n", r, chip->registers[r], chip->registers[r]);
+                }
+
+                // Key state
+                printf("Keys Pressed: ");
+                for (int i = 0; i < 16; i++) {
+                    printf(" %d", chip->keys_pressed[i]);
+                }
+                printf("\nKeys Snapshot:");
+                for (int i = 0; i < 16; i++) {
+                    printf(" %d", chip->keys_snapshot[i]);
                 }
                 
                 break;

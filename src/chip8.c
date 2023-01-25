@@ -18,11 +18,14 @@ void init_chip8(Chip8 *chip, Debugger *debug, uint32_t foreground, uint32_t back
     chip->debugger = debug;
     chip->foreground_colour = foreground;
     chip->background_colour = background; 
+    chip->waiting_to_draw = 0;
+    chip->display_interrupt_triggered = false;
     
     memset(chip->memory, 0, sizeof(chip->memory));
     memset(chip->registers, 0, sizeof(chip->registers));
     memset(chip->stack, 0, sizeof(chip->stack));
     memset(chip->keys_pressed, 0, sizeof(chip->keys_pressed));
+    memset(chip->keys_snapshot, 0, sizeof(chip->keys_snapshot));
 
     // Call 00E0 to keep the clear screen behaviour consistent
     debug(chip->debugger, printf("Initializing Screen with 00E0\n"));
@@ -106,23 +109,20 @@ int load_rom(Chip8 *chip, char *rom_filename) {
     return result;
 }
 
-bool cycle(Chip8 *chip) {
+void cycle(Chip8 *chip) {
     Instruction instruction = { 0 };
-    bool update_display = false;
 
     // Fetch and Decode the next instruction
     decode(chip, &instruction);
     
     debug(chip->debugger, debug_instruction(&instruction));
     
-
     switch (instruction.instruction) {
         case 0x0:
             switch (instruction.nnn) {
                 //00E0 Clear Screen    
                 case 0x00E0:
                     exec_00E0(chip);
-                    update_display = true;
                     break;
                 //00EE Return from Subroutine 
                 case 0x00EE:
@@ -232,7 +232,7 @@ bool cycle(Chip8 *chip) {
         case 0xD:
             // DXYN Display 
             exec_DXYN(chip, instruction.x, instruction.y, instruction.n);
-            update_display = true;
+            chip->waiting_to_draw++;
             break;
         case 0xE:
             if (instruction.nn == 0x9E) {
@@ -292,8 +292,6 @@ bool cycle(Chip8 *chip) {
             printf("UNDEFINED INSTRUCTION %X%X%X%X\n", instruction.instruction, instruction.x, instruction.y, instruction.n);
             break;
     }
-
-    return update_display; 
 }
 
 void decode(Chip8 *chip, Instruction *instruction) {
@@ -507,6 +505,16 @@ void exec_CXNN(Chip8 *chip, uint8_t x, uint8_t nn) {
  
 void exec_DXYN(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n) {
     debug(chip->debugger, halt_if_breakpoint(chip, "DXYN"));
+
+    // Halt Drawing until we hit the interrupt
+    // This is pass the Display Quirk test in Timendus' test suite
+    if (!chip->display_interrupt_triggered) {
+        chip->pc -= 2;
+        return;
+    } 
+        
+    chip->display_interrupt_triggered = false; 
+    
     // Get the X/Y coords to draw the sprite 
     int x_coord = chip->registers[x] % SCREEN_WIDTH;
     int y_coord = chip->registers[y] % SCREEN_HEIGHT;
@@ -547,7 +555,7 @@ void exec_DXYN(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n) {
 void exec_EX9E(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "EX9E"));
 
-    // TODO Bounds checking?    
+    // TODO Bounds checking?
     if (chip->keys_pressed[chip->registers[x]]) {
         chip->pc += 2;   
     }
@@ -556,7 +564,7 @@ void exec_EX9E(Chip8 *chip, uint8_t x) {
 void exec_EXA1(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "EXA1"));
     
-    // TODO Bounds checking?    
+    // TODO Bounds checking?
     if (!chip->keys_pressed[chip->registers[x]]) {
         chip->pc += 2;   
     }
@@ -589,20 +597,26 @@ void exec_FX1E(Chip8 *chip, uint8_t x) {
     }
 }
 
-// TODO the original COSMAC VIP only continued execution on key release
 void exec_FX0A(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "FX0A"));
 
     int pressed = -1;
+
     for (int i = 0; i < 16; i++) {
-        if (chip->keys_pressed[i]) {
+        if (!chip->keys_pressed[i] && chip->keys_snapshot[i]) {
             pressed = i;
             break;
         }
-    }
+
+        // Update the snapshot
+        chip->keys_snapshot[i] = chip->keys_pressed[i];
+    }    
+
 
     if (pressed > -1) {
         chip->registers[x] = pressed;
+        // Set the snapshot to 0 to avoid weird state
+        memset(chip->keys_snapshot, 0, sizeof(chip->keys_snapshot));
     } else {
         // Decrement the PC to halt execution
         chip->pc -= 2;

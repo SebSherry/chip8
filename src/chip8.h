@@ -9,7 +9,7 @@
 void init_chip8(Chip8 *chip, Debugger *debug, uint32_t foreground, uint32_t background);
 void cleanup_chip8(Chip8 *chip);
 int load_rom(Chip8 *chip, char *rom_filename);
-bool cycle(Chip8 *chip);
+void cycle(Chip8 *chip);
 // Fetch and Decode the next instruction
 void decode(Chip8 *chip, Instruction *instruction);   
 void update_timers(Chip8 *chip);
