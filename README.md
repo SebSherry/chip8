@@ -10,28 +10,25 @@ You need a C compiler, Make, and [SDL2](https://www.libsdl.org/) installed to co
 
 Debian/Ubuntu: 
 ```Shell
-apt install libsdl2-dev
-  
+apt install libsdl2-dev 
 ```
 
 Arch: 
 ```Shell
 pacman -S sdl2
-  
 ```
+
 Void Linux: 
 ```Shell
 xbps-install SDL2-devel
-  
 ```
 
 Fedora/RHEL: 
 ```Shell
-yum install SDL2-devel
-  
+yum install SDL2-devel  
 ```
 
-Building from source:
+### Building from source:
 ```Shell
 git clone https://github.com/SebSherry/chip8.git
 cd chip8
