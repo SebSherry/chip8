@@ -1,6 +1,7 @@
 #include "chip8.h"
 #include "debug.h"
 #include "structs.h"
+#include "io.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -62,7 +63,7 @@ int debug_prompt_user(Debugger *debugger, Chip8 *chip) {
     int result = 0;
     printf("\nPaused Execution\n");
     while(!valid) {
-        printf("Please enter one of the following:\ng: Show State | n: Step | b: Set Breakpoint on instruction | m: Continue till breakpoint | k: Quit\n");
+        printf("Please enter one of the following:\ng: Show State | n: Step | b: Set Breakpoint on instruction | m: Continue till breakpoint | l: Change Key State | k: Quit\n");
         
         char c = getchar();
         while (getchar() != '\n') {}
@@ -135,9 +136,24 @@ int debug_prompt_user(Debugger *debugger, Chip8 *chip) {
                 }
 
                 // Key state
-                printf("Keys Pressed:  %d\n", chip->keys_pressed);
-                printf("Keys Snapshot: %d\n", chip->keys_snapshot);
-                
+                printf("Key Pressed  Keys Snapshot\n");
+                uint16_t state = chip->keys_pressed;
+                uint16_t snapshot = chip->keys_pressed;
+                for (int k = 0; k < NUM_OF_KEYS; k++) {
+                    bool pressed = state & 1;
+                    bool prev = snapshot & 1;
+                    printf("%X: %s  %s\n", k, pressed ? "PRESSED" : "RELEASED", prev ? "PRESSED" : "RELEASED");
+
+                    state >>= 1;
+                    snapshot >>= 1;
+                }
+                // Extra newline for visual seperation
+                printf("\n");
+                break;
+            case 'l':
+                // We want to loop again
+                valid = false;
+                set_key_state(chip);
                 break;
             default:
                 printf("Invalid input\n");
@@ -169,5 +185,41 @@ void halt_if_breakpoint(Chip8 *chip, char *instruction) {
         // Not a great practice but it works
         printf("Hit breakpoint");
         chip->debugger->exit = debug_prompt_user(chip->debugger, chip);
+    }
+}
+
+void set_key_state(Chip8 *chip) {
+    bool looping = true;
+    while (looping) {
+        // Print the current Key State 
+        uint16_t state = chip->keys_pressed;
+        printf("\n");
+        for (int i = 0; i < NUM_OF_KEYS; i++) {
+            bool pressed = state & 1;
+            printf("%X: %s\n", i, pressed ? "PRESSED" : "RELEASED");
+
+            state >>= 1;
+        }
+        
+        // Input loop
+        bool valid = false;
+        while (!valid) {
+            printf("Please enter a key to flip it's state or k to exit: ");
+            char key = getchar();
+            while (getchar() != '\n') {}
+
+            if (key == 'k') {
+                valid = true;
+                looping = false;
+                break;
+            }
+
+            if (!register_key_press(chip, key)) {
+                printf("Invalid input\n");
+                continue;
+            }
+
+            valid = true;
+        }
     }
 }

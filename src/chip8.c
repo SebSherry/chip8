@@ -555,7 +555,7 @@ void exec_DXYN(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n) {
 void exec_EX9E(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "EX9E"));
 
-    // TODO Bounds checking?
+    // x can only ever be 0-15
     uint16_t key = (chip->keys_pressed>>chip->registers[x]) & 1;
     
     if (key) {
@@ -566,7 +566,7 @@ void exec_EX9E(Chip8 *chip, uint8_t x) {
 void exec_EXA1(Chip8 *chip, uint8_t x) {
     debug(chip->debugger, halt_if_breakpoint(chip, "EXA1"));
     
-    // TODO Bounds checking?
+    // x can only ever be 0-15
     uint16_t key = (chip->keys_pressed>>chip->registers[x]) & 1;
     
     if (!key) {

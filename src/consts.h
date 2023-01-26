@@ -15,6 +15,7 @@
 #define FONTSET_SIZE 80
 #define FONT_START_MEMORY_ADDR 0x50
 #define ROM_START_MEMORY_ADDR 0x200 
+#define NUM_OF_KEYS 16
 
 // Colours 
 #define BLACK 0

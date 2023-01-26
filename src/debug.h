@@ -10,4 +10,5 @@ void cleanup_debugger(Debugger *debugger);
 int debug_prompt_user(Debugger *debugger, Chip8 *chip);
 void debug_instruction(Instruction *instruction);
 void halt_if_breakpoint(Chip8 *chip, char *instruction);
+void set_key_state(Chip8 *chip);
 #endif

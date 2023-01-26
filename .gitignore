@@ -6,6 +6,8 @@
 
 # Include self
 !.gitignore
+!README.md
+!LICENSE
 
 !Makefile
 !src/**

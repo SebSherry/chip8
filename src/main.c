@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
                     }
 
                     // Prevent execution of instruction when we quit the debugger
-                    if (quit) continue;
+                    if (quit) break;
                 }
                 cycle(&chip);
                 

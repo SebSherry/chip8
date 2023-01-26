@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include "io.h"
 #include "consts.h"
-#include "structs.h"
 
 bool init_display(Display *display, int scale) {
     // Init SDL
@@ -59,97 +58,75 @@ bool process_keyboard_input(Chip8 *chip) {
         } 
 
         if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-            switch(event.key.keysym.sym)
-            {
-                case SDLK_ESCAPE:
-                {
-                    return true;      
-                }
-                case SDLK_1:
-                {
-                    chip->keys_pressed ^= KEY_1_MASK;
-                    break;
-                } 
-                case SDLK_2:
-                {
-                    chip->keys_pressed ^= KEY_2_MASK;
-                    break;
-                } 
-                case SDLK_3:
-                {
-                    chip->keys_pressed ^= KEY_3_MASK;
-                    break;
-                } 
-                case SDLK_4:
-                {
-                    chip->keys_pressed ^= KEY_C_MASK;
-                    break;
-                } 
-                case SDLK_q:
-                {
-                    chip->keys_pressed ^= KEY_4_MASK;
-                    break;
-                } 
-                case SDLK_w:
-                {
-                    chip->keys_pressed ^= KEY_5_MASK;
-                    break;
-                } 
-                case SDLK_e:
-                {
-                    chip->keys_pressed ^= KEY_6_MASK;
-                    break;
-                } 
-                case SDLK_r:
-                {
-                    chip->keys_pressed ^= KEY_D_MASK;
-                    break;
-                } 
-                case SDLK_a:
-                {
-                    chip->keys_pressed ^= KEY_7_MASK;
-                    break;
-                } 
-                case SDLK_s:
-                {
-                    chip->keys_pressed ^= KEY_8_MASK;
-                    break;
-                } 
-                case SDLK_d:
-                {
-                    chip->keys_pressed ^= KEY_9_MASK;
-                    break;
-                } 
-                case SDLK_f:
-                {
-                    chip->keys_pressed ^= KEY_E_MASK;
-                    break;
-                } 
-                case SDLK_z:
-                {
-                    chip->keys_pressed ^= KEY_A_MASK;
-                    break;
-                } 
-                case SDLK_x:
-                {
-                    chip->keys_pressed ^= KEY_0_MASK;
-                    break;
-                } 
-                case SDLK_c:
-                {
-                    chip->keys_pressed ^= KEY_B_MASK;
-                    break;
-                } 
-                case SDLK_v:
-                {
-                    chip->keys_pressed ^= KEY_F_MASK;
-                    break;
-                } 
-            }    
-        }
+            if (event.key.keysym.sym == SDLK_ESCAPE) {
+                return true;
+            }   
+
+            // We ignore invalid keys here
+            register_key_press(chip, event.key.keysym.sym);
+        }   
     }
     
     return false;
+}
+
+bool register_key_press(Chip8 *chip, int key) {
+    bool valid = true;
+    
+    switch(key) {
+        case SDLK_1:
+            chip->keys_pressed ^= KEY_1_MASK;
+            break;
+        case SDLK_2:
+            chip->keys_pressed ^= KEY_2_MASK;
+            break;
+        case SDLK_3:
+            chip->keys_pressed ^= KEY_3_MASK;
+            break;
+        case SDLK_4:
+            chip->keys_pressed ^= KEY_C_MASK;
+            break;
+        case SDLK_q:
+            chip->keys_pressed ^= KEY_4_MASK;
+            break;
+        case SDLK_w:
+            chip->keys_pressed ^= KEY_5_MASK;
+            break;
+        case SDLK_e:
+            chip->keys_pressed ^= KEY_6_MASK;
+            break;
+        case SDLK_r:
+            chip->keys_pressed ^= KEY_D_MASK;
+            break;
+        case SDLK_a:
+            chip->keys_pressed ^= KEY_7_MASK;
+            break;
+        case SDLK_s:
+            chip->keys_pressed ^= KEY_8_MASK;
+            break;
+        case SDLK_d:
+            chip->keys_pressed ^= KEY_9_MASK;
+            break;
+        case SDLK_f:
+            chip->keys_pressed ^= KEY_E_MASK;
+            break;
+        case SDLK_z:
+            chip->keys_pressed ^= KEY_A_MASK;
+            break;
+        case SDLK_x:
+            chip->keys_pressed ^= KEY_0_MASK;
+            break;
+        case SDLK_c:
+            chip->keys_pressed ^= KEY_B_MASK;
+            break;
+        case SDLK_v:
+            chip->keys_pressed ^= KEY_F_MASK;
+            break;
+        default:
+            valid = false; 
+    }    
+
+    return valid;
 }
 
 void cleanup_display(Display *display) {
