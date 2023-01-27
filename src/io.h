@@ -16,5 +16,7 @@ void update_display(Display *display, void const* buffer, int pitch);
 bool process_keyboard_input(Chip8 *chip);
 bool register_key_press(Chip8 *chip, int key);
 void cleanup_display(Display *display);
+int read_user_character_input();
+int read_user_integer_input();
 
 #endif

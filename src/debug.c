@@ -65,8 +65,7 @@ int debug_prompt_user(Debugger *debugger, Chip8 *chip) {
     while(!valid) {
         printf("Please enter one of the following:\ng: Show State | n: Step | b: Set Breakpoint on instruction | m: Continue till breakpoint | l: Change Key State | k: Quit\n");
         
-        char c = getchar();
-        while (getchar() != '\n') {}
+        char c = (char) read_user_character_input();
         valid = true;
         
         switch (c) {
@@ -92,20 +91,13 @@ int debug_prompt_user(Debugger *debugger, Chip8 *chip) {
                 printf("10. 8XY0 Set x=y  20. ANNN Set IDX  30. FX0A Get Key\n");
                 printf("Please select an instruction: ");
                 
-                int selection;
-                scanf("%d", &selection);
-                // get newline
-                getchar();
-                
+                int selection = read_user_integer_input();                
                 if (selection < 1 || selection > 34) {
                     printf("Invalid input\n");
                 } else {
                     if (debugger->breakpoints[selection-1]) {
                         printf("Breakpoint is ready set for this instruction. Would you like to remove it? (y/n): ");
-                        char response = getchar();
-                        // Get char again to remove the newline
-                        // TODO handle longer input
-                        getchar();
+                        char response = (char) read_user_character_input();
                         if (response == 'y') {
                             printf("Removing breakpoint on %s\n", debugger->instruction_map[selection-1]);
                             debugger->breakpoints[selection-1] = false;
@@ -205,8 +197,7 @@ void set_key_state(Chip8 *chip) {
         bool valid = false;
         while (!valid) {
             printf("Please enter a key to flip it's state or k to exit: ");
-            char key = getchar();
-            while (getchar() != '\n') {}
+            char key = (char) read_user_character_input();
 
             if (key == 'k') {
                 valid = true;

@@ -1,6 +1,9 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_keycode.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
 #include "io.h"
 #include "consts.h"
 
@@ -142,5 +145,45 @@ void cleanup_display(Display *display) {
 
     // Quit SDL subsystems
     SDL_Quit();
+}
+
+int read_user_character_input() {
+    char *line = NULL;
+    size_t len = 0;
+    
+    // We only want 1 character, so anything other than 1 is a failure
+    if (getline(&line, &len, stdin) != 2) {
+        free(line);
+        return -1;
+    }
+
+    char character;
+    sscanf(line, "%c", &character);
+    
+    free(line);
+    return character;
+}
+
+int read_user_integer_input() {
+    char *line = NULL;
+    size_t len = 0;
+    
+    if (getline(&line, &len, stdin) == -1) {
+        free(line);
+        return -1;
+    }
+
+    int number;
+    char *end = NULL;
+
+    number = strtoul(line, &end, 10);
+
+    // Fail on Leftover input
+    if (strncmp(end, "\n", 1)) {
+        return -1;
+    }
+
+    free(line);
+    return number;
 }
 

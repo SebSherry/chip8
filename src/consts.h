@@ -12,6 +12,7 @@
 // System constants
 #define NUM_OF_INSTRUCTIONS 34
 #define NUM_OF_REGISTERS 16
+#define MAX_STACK_SIZE 16
 #define FONTSET_SIZE 80
 #define FONT_START_MEMORY_ADDR 0x50
 #define ROM_START_MEMORY_ADDR 0x200 

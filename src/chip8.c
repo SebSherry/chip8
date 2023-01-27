@@ -331,10 +331,11 @@ void exec_00E0(Chip8 *chip) {
 void exec_00EE(Chip8 *chip) {
     debug(chip->debugger, halt_if_breakpoint(chip, "00EE"));
 
-    // TODO Check for stack underflow
-    chip->stack_pointer--;
-    chip->pc = chip->stack[chip->stack_pointer];
-    chip->stack[chip->stack_pointer] = 0;   
+    if (chip->stack_pointer > 0) {
+        chip->stack_pointer--;
+        chip->pc = chip->stack[chip->stack_pointer];
+        chip->stack[chip->stack_pointer] = 0;   
+    }
 }
    
 void exec_1NNN(Chip8 *chip, uint16_t nnn) {
@@ -345,11 +346,12 @@ void exec_1NNN(Chip8 *chip, uint16_t nnn) {
 void exec_2NNN(Chip8 *chip, uint16_t nnn) {
     debug(chip->debugger, halt_if_breakpoint(chip, "2NNN"));
 
-    // TODO Check for stack overflow
-    chip->stack[chip->stack_pointer] = chip->pc;
-    chip->stack_pointer++;
+    if (chip->stack_pointer < MAX_STACK_SIZE) {
+        chip->stack[chip->stack_pointer] = chip->pc;
+        chip->stack_pointer++;
     
-    chip->pc = nnn;
+        chip->pc = nnn;
+    }
 }
    
 void exec_3XNN(Chip8 *chip, uint8_t x, uint8_t nn) {
@@ -609,7 +611,7 @@ void exec_FX0A(Chip8 *chip, uint8_t x) {
         uint16_t diff = chip->keys_snapshot;
         uint16_t current = chip->keys_pressed;
 
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < NUM_OF_KEYS; i++) {
             if (((current & 1) == 0) && ((diff & 1) == 1)) {
                 pressed = i;
                 break;

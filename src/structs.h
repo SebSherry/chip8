@@ -21,7 +21,7 @@ typedef struct {
     uint8_t waiting_to_draw;
     uint16_t pc;
     uint16_t iregister;
-    uint16_t stack[16];
+    uint16_t stack[MAX_STACK_SIZE];
     uint16_t keys_pressed;
     uint16_t keys_snapshot;
     uint32_t screen[SCREEN_SIZE];
