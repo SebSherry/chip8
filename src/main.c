@@ -60,8 +60,8 @@ int main(int argc, char *argv[]) {
     update_display(&display, &chip.screen, PITCH);
 
     // Calculate CPU timing 
-    delay = 1000000 / 60;
-    cycles_per_frame = args.target_cycles / 60;
+    delay = MICROSECS_IN_SECOND / TARGET_FRAMES_PER_SECOND;
+    cycles_per_frame = args.target_cycles / TARGET_FRAMES_PER_SECOND;
 
     clock_gettime(CLOCK_MONOTONIC_RAW, &last_cycle);
     while (!quit) {
@@ -70,8 +70,8 @@ int main(int argc, char *argv[]) {
         if (quit) continue;
         
         clock_gettime(CLOCK_MONOTONIC_RAW, &now);
-        diff = (now.tv_sec - last_cycle.tv_sec) * 1000000 +
-               (now.tv_nsec - last_cycle.tv_nsec) / 1000;
+        diff = (now.tv_sec - last_cycle.tv_sec) * MICROSECS_IN_SECOND +
+               (now.tv_nsec - last_cycle.tv_nsec) / NANOSECS_IN_MICROSECONDS;
 
         if (diff > delay) {
             last_cycle = now;
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
             update_display(&display, &chip.screen, PITCH);
             update_timers(&chip);
 
-            if (chip.waiting_to_draw >= 2) {
+            if (chip.waiting_to_draw > 2) {
                 chip.display_interrupt_triggered = true;
             }
 
